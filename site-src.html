@@ -139,7 +139,7 @@ a:hover{color:#c6ab7f}
 
 <div data-grain="" aria-hidden="true" style="position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0.05;mix-blend-mode:overlay;background-size:140px 140px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27g%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.82%27 numOctaves=%272%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27140%27 height=%27140%27 filter=%27url(%23g)%27/%3E%3C/svg%3E')"></div>
 
-<div data-chrome="" style="position:fixed;top:0;left:0;right:0;z-index:50;opacity:0;transition:opacity 1s ease;pointer-events:none">
+<div data-chrome="" style="position:fixed;top:0;left:0;right:0;z-index:50;opacity:0;visibility:hidden;pointer-events:none;transition:opacity 0.4s ease, visibility 0.4s ease">
   <div style="height:1px;width:100%;background:rgba(233,227,217,0.12)">
     <div data-progress="" style="height:1px;width:0%;background:#c6ab7f;transition:width .7s cubic-bezier(.22,.61,.36,1)"></div>
   </div>
@@ -149,7 +149,7 @@ a:hover{color:#c6ab7f}
   </div>
 </div>
 
-<nav data-chrome-nav="" aria-label="Exhibition rooms" style="position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;justify-content:center;gap:clamp(14px,3vw,30px);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,rgba(16,15,13,0.94),rgba(16,15,13,0));font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10.5px;letter-spacing:0.2em;opacity:0;transition:opacity 1s ease">
+<nav data-chrome-nav="" aria-label="Exhibition rooms" style="position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;justify-content:center;gap:clamp(14px,3vw,30px);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,rgba(16,15,13,0.94),rgba(16,15,13,0));font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10.5px;letter-spacing:0.2em;opacity:0;visibility:hidden;pointer-events:none;transition:opacity 0.4s ease, visibility 0.4s ease">
   <a href="#room-3" data-navlink="Street &amp; City Life" aria-label="Room one, Street and City Life" style="color:#8f867a;padding:6px 2px" style-hover="color:#c6ab7f">I</a>
   <a href="#room-1" data-navlink="Wildlife" aria-label="Room two, Wildlife" style="color:#8f867a;padding:6px 2px" style-hover="color:#c6ab7f">II</a>
   <a href="#room-2" data-navlink="Night Skies" aria-label="Room three, Night Skies" style="color:#8f867a;padding:6px 2px" style-hover="color:#c6ab7f">III</a>
@@ -659,7 +659,11 @@ class Component extends DCLogic {
     const chromeOn = y > window.innerHeight * 0.4 ? '1' : '0';
     const bar = document.querySelector('[data-chrome]');
     const nav = document.querySelector('[data-chrome-nav]');
-    if (nav) { nav.style.opacity = chromeOn; nav.style.pointerEvents = chromeOn === '1' ? 'auto' : 'none'; }
+    if (nav) {
+      nav.style.opacity = chromeOn;
+      nav.style.pointerEvents = chromeOn === '1' ? 'auto' : 'none';
+      nav.style.visibility = chromeOn === '1' ? 'visible' : 'hidden';
+    }
 
     const hero = document.querySelector('[data-hero]');
     if (hero && !this.reduce) hero.style.transform = 'translateY(' + Math.min(y * 0.12, 90) + 'px) scale(1.04)';
@@ -690,9 +694,9 @@ class Component extends DCLogic {
       const label = pad(idx) + ' / ' + pad(count);
       if (c && c.textContent !== label) c.textContent = label;
       if (p) p.style.width = (idx / count) * 100 + '%';
-      if (bar) { bar.style.opacity = '1'; bar.style.pointerEvents = 'auto'; }
+      if (bar) { bar.style.opacity = '1'; bar.style.pointerEvents = 'auto'; bar.style.visibility = 'visible'; }
     } else {
-      if (bar) { bar.style.opacity = '0'; bar.style.pointerEvents = 'none'; }
+      if (bar) { bar.style.opacity = '0'; bar.style.pointerEvents = 'none'; bar.style.visibility = 'hidden'; }
     }
 
     let currentRoomName = activeWall ? activeWall.room : null;
