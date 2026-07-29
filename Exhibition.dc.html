@@ -663,35 +663,65 @@ class Component extends DCLogic {
     if (hero && !this.reduce) hero.style.transform = 'translateY(' + Math.min(y * 0.12, 90) + 'px) scale(1.04)';
 
     const pad = n => String(n).padStart(2, '0');
-    const mid = window.innerHeight / 2;
-    let cur = null, bd = Infinity;
+    const vh = window.innerHeight;
+    const mid = vh / 2;
+
+    let activeWall = null;
     this.walls.forEach(w => {
       const r = w.sec.getBoundingClientRect();
-      const d = Math.abs(r.top + r.height / 2 - mid);
-      if (d < bd) { bd = d; cur = w; }
       const i = this.activeFrame(w) + 1;
       const label = pad(i) + ' / ' + pad(w.frames.length);
       if (w.count && w.count.textContent !== label) w.count.textContent = label;
       w.frames.forEach((f, fi) => { f.style.opacity = fi === i - 1 ? '1' : '0.55'; f.style.transition = 'opacity ' + (0.4 * this.pace) + 's ease'; });
+
+      if (r.top <= vh * 0.65 && r.bottom >= vh * 0.35) {
+        activeWall = w;
+      }
     });
 
-    const curRect = cur ? cur.sec.getBoundingClientRect() : null;
-    const isWallInView = curRect && (curRect.top <= mid + 60 && curRect.bottom >= mid - 60);
-    const topBarOn = (chromeOn === '1' && isWallInView) ? '1' : '0';
-    if (bar) { bar.style.opacity = topBarOn; bar.style.pointerEvents = topBarOn === '1' ? 'auto' : 'none'; }
+    if (activeWall) {
+      const idx = this.activeFrame(activeWall) + 1, count = activeWall.frames.length;
+      const r = document.querySelector('[data-pos-room]');
+      const c = document.querySelector('[data-pos-count]');
+      const p = document.querySelector('[data-progress]');
+      if (r && r.textContent !== activeWall.room) r.innerHTML = activeWall.room;
+      const label = pad(idx) + ' / ' + pad(count);
+      if (c && c.textContent !== label) c.textContent = label;
+      if (p) p.style.width = (idx / count) * 100 + '%';
+      if (bar) { bar.style.opacity = '1'; bar.style.pointerEvents = 'auto'; }
+    } else {
+      if (bar) { bar.style.opacity = '0'; bar.style.pointerEvents = 'none'; }
+    }
 
-    if (!cur) return;
-    const idx = this.activeFrame(cur) + 1, count = cur.frames.length;
-    const r = document.querySelector('[data-pos-room]');
-    const c = document.querySelector('[data-pos-count]');
-    const p = document.querySelector('[data-progress]');
-    if (r && r.textContent !== cur.room) r.innerHTML = cur.room;
-    const label = pad(idx) + ' / ' + pad(count);
-    if (c && c.textContent !== label) c.textContent = label;
-    if (p) p.style.width = (idx / count) * 100 + '%';
-    document.querySelectorAll('[data-navlink]').forEach(a => {
-      a.style.color = a.dataset.navlink === cur.room ? '#e9e3d9' : '#8f867a';
-    });
+    let currentRoomName = activeWall ? activeWall.room : null;
+    if (!currentRoomName) {
+      const allSections = Array.from(document.querySelectorAll('section[data-screen-label], section[id^="room-"]'));
+      let nearestSec = null, minD = Infinity;
+      allSections.forEach(sec => {
+        const rect = sec.getBoundingClientRect();
+        const dist = Math.abs(rect.top + rect.height / 2 - mid);
+        if (dist < minD) { minD = dist; nearestSec = sec; }
+      });
+      if (nearestSec) {
+        const roomAttr = nearestSec.dataset.room;
+        if (roomAttr) currentRoomName = roomAttr;
+        else {
+          const id = nearestSec.id;
+          if (id === 'room-3') currentRoomName = 'Street & City Life';
+          else if (id === 'room-1') currentRoomName = 'Wildlife';
+          else if (id === 'room-2') currentRoomName = 'Night Skies';
+          else if (id === 'room-4') currentRoomName = 'Places';
+          else if (id === 'room-5') currentRoomName = 'The Artist';
+          else if (id === 'room-6') currentRoomName = 'Front Desk';
+        }
+      }
+    }
+
+    if (currentRoomName) {
+      document.querySelectorAll('[data-navlink]').forEach(a => {
+        a.style.color = a.dataset.navlink === currentRoomName ? '#e9e3d9' : '#8f867a';
+      });
+    }
   }
 
   open(i) {
