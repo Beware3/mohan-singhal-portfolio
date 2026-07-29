@@ -13,8 +13,8 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Archivo:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-html{background:#100f0d;scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden}
-body{margin:0;background:#100f0d;color:#e9e3d9;font-family:'EB Garamond',Georgia,serif;font-size:18px;line-height:1.5}
+html{background:#100f0d;scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden;scroll-snap-type:y mandatory}
+body{margin:0;background:#100f0d;color:#e9e3d9;font-family:'EB Garamond',Georgia,serif;font-size:18px;line-height:1.5;scroll-snap-type:y mandatory}
 img{display:block}
 a{color:#e9e3d9;text-decoration:none}
 a:hover{color:#c6ab7f}
@@ -22,6 +22,68 @@ a:hover{color:#c6ab7f}
 :focus-visible{outline:1px solid #c6ab7f;outline-offset:6px}
 [data-rail]::-webkit-scrollbar{display:none}
 @keyframes omDrift{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(6px);opacity:1}}
+
+/* Section Snap Stop Mandatory */
+header[data-screen-label],
+section[data-screen-label],
+section[data-wall],
+section[id^="room-"] {
+  scroll-snap-align: start !important;
+  scroll-snap-stop: always !important;
+}
+
+/* Floating Page Up/Down Navigation Controls */
+[data-nav-controls] {
+  position: fixed;
+  right: clamp(16px, 3vw, 36px);
+  bottom: clamp(24px, 4vh, 48px);
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+[data-nav-controls].is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.page-nav-btn {
+  all: unset;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(16,15,13,0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(233,227,217,0.22);
+  color: #c6ab7f;
+  font-size: 17px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.page-nav-btn:hover {
+  background: #c6ab7f;
+  color: #100f0d;
+  border-color: #c6ab7f;
+  transform: translateY(-2px);
+}
+.page-nav-btn:disabled, .page-nav-btn[aria-disabled="true"] {
+  opacity: 0.3;
+  cursor: default;
+  transform: none !important;
+  border-color: rgba(233,227,217,0.1) !important;
+  color: #6d665d !important;
+  background: rgba(16,15,13,0.5) !important;
+}
 
 /* Automatic Mobile View Optimizations (< 768px) */
 @media (max-width: 768px) {
@@ -512,6 +574,11 @@ a:hover{color:#c6ab7f}
   <button type="button" onClick="{{onNext}}" aria-label="Next photograph" style="all:unset;position:absolute;right:0;top:50%;transform:translateY(-50%);cursor:pointer;width:clamp(46px,7vw,92px);height:120px;display:flex;align-items:center;justify-content:center;font-size:34px;color:#6d665d" style-hover="color:#e9e3d9">›</button>
 </div>
 
+<div data-nav-controls="" aria-label="Section navigation controls">
+  <button type="button" class="page-nav-btn" data-btn-up="" aria-label="Previous section" title="Previous section">↑</button>
+  <button type="button" class="page-nav-btn" data-btn-down="" aria-label="Next section" title="Next section">↓</button>
+</div>
+
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;motionPace&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.5,&quot;min&quot;:0.2,&quot;max&quot;:2,&quot;step&quot;:0.1,&quot;unit&quot;:&quot;×&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;snapScroll&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;grain&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.05,&quot;min&quot;:0,&quot;max&quot;:0.12,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Atmosphere&quot;}}">
 class Component extends DCLogic {
@@ -527,7 +594,11 @@ class Component extends DCLogic {
     this.scroller = (document.scrollingElement && document.scrollingElement.scrollHeight > window.innerHeight + 4)
       ? document.scrollingElement
       : (document.body.scrollHeight > document.body.clientHeight + 4 ? document.body : document.scrollingElement || document.documentElement);
-    this.scroller.style.scrollSnapType = (this.props.snapScroll ?? true) ? 'y proximity' : 'none';
+    
+    // Enable mandatory y scroll snapping
+    this.scroller.style.scrollSnapType = 'y mandatory';
+    document.documentElement.style.scrollSnapType = 'y mandatory';
+    document.body.style.scrollSnapType = 'y mandatory';
 
     this.items = Array.from(document.querySelectorAll('[data-work]')).map(el => {
       const img = el.querySelector('img');
@@ -557,6 +628,13 @@ class Component extends DCLogic {
       });
     });
 
+    // Page Up / Down section navigation controls
+    this.allSections = Array.from(document.querySelectorAll('header[data-screen-label], section[data-screen-label], section[data-wall], section[id^="room-"]'));
+    const btnUp = document.querySelector('[data-btn-up]');
+    const btnDown = document.querySelector('[data-btn-down]');
+    if (btnUp) btnUp.addEventListener('click', () => this.jumpSection(-1));
+    if (btnDown) btnDown.addEventListener('click', () => this.jumpSection(1));
+
     this.setupReveal();
     window.addEventListener('resize', this.onResize);
     document.addEventListener('scroll', this.onScroll, { passive: true, capture: true });
@@ -576,6 +654,22 @@ class Component extends DCLogic {
       else if (e.key === 'ArrowLeft') { e.preventDefault(); this.nav(-1); }
     });
     this.track();
+  }
+
+  jumpSection(dir) {
+    if (!this.allSections || !this.allSections.length) return;
+    let curIdx = 0, bd = Infinity;
+    this.allSections.forEach((sec, idx) => {
+      const rect = sec.getBoundingClientRect();
+      const d = Math.abs(rect.top + 30);
+      if (d < bd) { bd = d; curIdx = idx; }
+    });
+
+    const nextIdx = Math.min(this.allSections.length - 1, Math.max(0, curIdx + dir));
+    const target = this.allSections[nextIdx];
+    if (target) {
+      target.scrollIntoView({ behavior: this.reduce ? 'auto' : 'smooth', block: 'start' });
+    }
   }
 
   componentWillUnmount() {
@@ -661,6 +755,15 @@ class Component extends DCLogic {
       nav.style.opacity = chromeOn;
       nav.style.pointerEvents = chromeOn === '1' ? 'auto' : 'none';
       nav.style.visibility = chromeOn === '1' ? 'visible' : 'hidden';
+    }
+
+    const navControls = document.querySelector('[data-nav-controls]');
+    if (navControls) {
+      if (y > 120) {
+        navControls.classList.add('is-active');
+      } else {
+        navControls.classList.remove('is-active');
+      }
     }
 
     const hero = document.querySelector('[data-hero]');
