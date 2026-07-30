@@ -13,8 +13,8 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Archivo:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-html{background:#100f0d;scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden;scroll-snap-type:y mandatory}
-body{margin:0;background:#100f0d;color:#e9e3d9;font-family:'EB Garamond',Georgia,serif;font-size:18px;line-height:1.5;scroll-snap-type:y mandatory}
+html{background:#100f0d;scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{margin:0;background:#100f0d;color:#e9e3d9;font-family:'EB Garamond',Georgia,serif;font-size:18px;line-height:1.5;-webkit-overflow-scrolling:touch}
 img{display:block}
 a{color:#e9e3d9;text-decoration:none}
 a:hover{color:#c6ab7f}
@@ -23,13 +23,33 @@ a:hover{color:#c6ab7f}
 [data-rail]::-webkit-scrollbar{display:none}
 @keyframes omDrift{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(6px);opacity:1}}
 
-/* Section Snap Stop Mandatory */
-header[data-screen-label],
-section[data-screen-label],
-section[data-wall],
-section[id^="room-"] {
-  scroll-snap-align: start !important;
-  scroll-snap-stop: always !important;
+/* Gentle section snapping — desktop / mouse-wheel only.
+   Uses "proximity" so a section taller than the viewport can never trap
+   the user, and no scroll-snap-stop so one flick can cross several rooms. */
+@media (min-width: 769px) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+  header[data-screen-label],
+  section[data-screen-label],
+  section[data-wall],
+  section[id^="room-"] {
+    scroll-snap-align: start;
+  }
+}
+
+/* Touch devices and short viewports: plain, native scrolling. */
+@media (max-width: 768px), (pointer: coarse), (max-height: 700px) {
+  html, body {
+    scroll-snap-type: none !important;
+  }
+  header[data-screen-label],
+  section[data-screen-label],
+  section[data-wall],
+  section[id^="room-"] {
+    scroll-snap-align: none !important;
+    scroll-snap-stop: normal !important;
+  }
 }
 
 /* Floating Page Up/Down Navigation Controls */
@@ -595,10 +615,11 @@ class Component extends DCLogic {
       ? document.scrollingElement
       : (document.body.scrollHeight > document.body.clientHeight + 4 ? document.body : document.scrollingElement || document.documentElement);
     
-    // Enable mandatory y scroll snapping
-    this.scroller.style.scrollSnapType = 'y mandatory';
-    document.documentElement.style.scrollSnapType = 'y mandatory';
-    document.body.style.scrollSnapType = 'y mandatory';
+    // Snapping is handled entirely in CSS (proximity, desktop-only) so that
+    // touch devices and over-tall sections keep plain native scrolling.
+    this.scroller.style.scrollSnapType = '';
+    document.documentElement.style.scrollSnapType = '';
+    document.body.style.scrollSnapType = '';
 
     this.items = Array.from(document.querySelectorAll('[data-work]')).map(el => {
       const img = el.querySelector('img');
