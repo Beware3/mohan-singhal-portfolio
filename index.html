@@ -23,6 +23,31 @@ a:hover{color:#c6ab7f}
 ::selection{background:#c6ab7f;color:#100f0d}
 :focus-visible{outline:1px solid #c6ab7f;outline-offset:6px}
 [data-rail]::-webkit-scrollbar{display:none}
+[data-rail-dots]{display:none}
+
+/* Entrance gate: the visitor is held on the first screen until they click
+   "Enter the exhibition". overflow:hidden alone is not honoured by iOS
+   Safari, so the body is also pinned — safe here because the gate is only
+   ever active at scroll position 0. */
+html.entrance-locked,
+html.entrance-locked body {
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overscroll-behavior: none !important;
+}
+html.entrance-locked body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+}
+html.entrance-locked [data-nav-controls],
+html.entrance-locked [data-chrome],
+html.entrance-locked [data-chrome-nav] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 @keyframes omDrift{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(6px);opacity:1}}
 
 /* Gentle section snapping — desktop / mouse-wheel only.
@@ -57,7 +82,7 @@ a:hover{color:#c6ab7f}
 /* Floating Page Up/Down Navigation Controls */
 [data-nav-controls] {
   position: fixed;
-  right: clamp(16px, 3vw, 36px);
+  left: clamp(16px, 3vw, 36px);
   bottom: clamp(24px, 4vh, 48px);
   z-index: 75;
   display: flex;
@@ -152,23 +177,66 @@ a:hover{color:#c6ab7f}
     padding: 44px 0 50px 0 !important;
     gap: 20px !important;
   }
+  /* Carousel affordance: frames are narrowed so the neighbouring photograph
+     always peeks in at the edge, and the rail edges fade so that peek reads
+     as "there is more this way" rather than as a cropping mistake. */
   [data-rail] {
-    gap: 16px !important;
+    gap: 14px !important;
     padding-top: 6px !important;
     padding-bottom: 10px !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
   }
   [data-frame] {
-    max-width: 88vw !important;
+    max-width: 74vw !important;
   }
   [data-frame] img {
-    max-height: 52dvh !important;
-    max-width: 88vw !important;
+    max-height: 50dvh !important;
+    max-width: 74vw !important;
   }
   [data-frame] > div[style*="aspect-ratio"] {
-    width: 86vw !important;
-    max-height: 52dvh !important;
+    width: 74vw !important;
+    max-height: 50dvh !important;
+  }
+
+  /* Position dots under the rail */
+  [data-rail-dots] {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    padding: 4px 20px 0;
+  }
+  .rail-dot {
+    all: unset;
+    display: block;
+    box-sizing: border-box;
+    cursor: pointer;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(233,227,217,0.4);
+    background: transparent;
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  }
+  .rail-dot.is-on {
+    background: #c6ab7f;
+    border-color: #c6ab7f;
+    transform: scale(1.4);
+  }
+
+  /* Prev/next need to look tappable, not decorative */
+  section[data-wall] [data-rail-prev],
+  section[data-wall] [data-rail-next] {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 50% !important;
+    font-size: 22px !important;
+    color: #c6ab7f !important;
+    border: 1px solid rgba(198,171,127,0.55) !important;
+    background: rgba(16,15,13,0.7) !important;
   }
 
   section[data-reveal]:not([data-wall]) {
@@ -209,10 +277,13 @@ a:hover{color:#c6ab7f}
     font-size: clamp(34px, 10vw, 48px) !important;
   }
   [data-frame] {
-    max-width: 90vw !important;
+    max-width: 78vw !important;
+  }
+  [data-frame] img {
+    max-width: 78vw !important;
   }
   [data-rail] {
-    gap: 14px !important;
+    gap: 12px !important;
   }
 }
 </style>
@@ -244,17 +315,16 @@ a:hover{color:#c6ab7f}
   <img data-hero="" src="photos/wild-02-leopard-yawn.jpg" alt="A leopard yawning wide in warm evening light, seen in profile against dry earth" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 40%;filter:saturate(0.92) contrast(1.02)">
   <div aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(16,15,13,0.96) 0%,rgba(16,15,13,0.72) 34%,rgba(16,15,13,0.28) 66%,rgba(16,15,13,0.5) 100%)"></div>
   <div style="position:relative;display:flex;flex-direction:column;gap:clamp(16px,2.4vh,30px);max-width:min(52ch,92vw)">
-    <p style="margin:0;font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10.5px;letter-spacing:0.34em;text-transform:uppercase;color:#c6ab7f">An exhibition in six rooms · 2019—2026</p>
     <h1 style="margin:0;font-weight:400;font-size:clamp(44px,8.6vw,112px);line-height:0.98;letter-spacing:-0.02em;text-wrap:balance">Mohan Singhal</h1>
     <p style="margin:0;font-size:clamp(19px,2.2vw,27px);line-height:1.5;color:#d6cec2;text-wrap:pretty">A visual field notebook from 50+ places across India — big cats and birds, night skies, and the ordinary theatre of the street.</p>
-    <a href="#room-3" style="display:inline-flex;flex-direction:column;gap:12px;width:fit-content;margin-top:clamp(8px,2vh,22px);font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#e9e3d9;padding-bottom:2px" style-hover="color:#c6ab7f">
+    <a href="#floor-plan" data-enter-gate="" style="display:inline-flex;flex-direction:column;gap:12px;width:fit-content;margin-top:clamp(8px,2vh,22px);font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#e9e3d9;padding-bottom:2px" style-hover="color:#c6ab7f">
       <span>Enter the exhibition</span>
       <span aria-hidden="true" style="width:1px;height:52px;background:linear-gradient(to bottom,#c6ab7f,rgba(198,171,127,0));animation:omDrift 4.4s ease-in-out infinite"></span>
     </a>
   </div>
 </header>
 
-<section data-screen-label="Floor plan" data-reveal="" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:clamp(80px,12vh,160px) clamp(24px,6vw,90px);scroll-snap-align:start">
+<section id="floor-plan" data-screen-label="Floor plan" data-reveal="" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:clamp(80px,12vh,160px) clamp(24px,6vw,90px);scroll-snap-align:start">
   <div style="display:flex;flex-direction:column;gap:clamp(18px,3vh,34px);width:min(74ch,92vw)">
     <p style="margin:0;font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10.5px;letter-spacing:0.34em;text-transform:uppercase;color:#c6ab7f">Floor plan</p>
     <p style="margin:0;font-size:clamp(19px,2vw,26px);line-height:1.56;color:#cdc5b8;max-width:48ch;text-wrap:pretty">Six rooms, walked in order or entered wherever you like. Each wall moves sideways, frame by frame — click any photograph to stand in front of it.</p>
@@ -636,8 +706,15 @@ class Component extends DCLogic {
       count: sec.querySelector('[data-rail-count]')
     }));
 
+    this.isNarrow = window.matchMedia('(max-width: 768px)').matches;
+
     this.walls.forEach(w => {
       this.padRail(w);
+      this.buildDots(w);
+      if (this.isNarrow) {
+        const hint = w.sec.querySelector('p');
+        if (hint) hint.textContent = 'Swipe sideways for more · tap a frame to enlarge';
+      }
       w.rail.addEventListener('scroll', this.onScroll, { passive: true });
       const btn = (sel, dir) => {
         const b = w.sec.querySelector(sel);
@@ -658,6 +735,7 @@ class Component extends DCLogic {
     if (btnUp) btnUp.addEventListener('click', () => this.jumpSection(-1));
     if (btnDown) btnDown.addEventListener('click', () => this.jumpSection(1));
 
+    this.setupEntranceGate();
     this.setupReveal();
     window.addEventListener('resize', this.onResize);
     document.addEventListener('scroll', this.onScroll, { passive: true, capture: true });
@@ -679,6 +757,43 @@ class Component extends DCLogic {
     this.track();
   }
 
+  setupEntranceGate() {
+    const header = document.querySelector('header[data-screen-label="Entrance"]');
+    const gate = header && header.querySelector('[data-enter-gate]');
+    const target = document.getElementById('floor-plan');
+    if (!header || !gate || !target) return;
+
+    // Only gate a fresh arrival at the top. A deep link (#room-4) or a reload
+    // that restored the scroll position must not trap the visitor.
+    if (window.location.hash || this.offset() > 8) return;
+
+    const root = document.documentElement;
+    root.classList.add('entrance-locked');
+    try { window.scrollTo(0, 0); } catch (e) {}
+
+    this.releaseEntrance = (scrollOn) => {
+      if (!root.classList.contains('entrance-locked')) return;
+      root.classList.remove('entrance-locked');
+      if (scrollOn) {
+        requestAnimationFrame(() => {
+          target.scrollIntoView({ behavior: this.reduce ? 'auto' : 'smooth', block: 'start' });
+          this.onScroll();
+        });
+      } else {
+        this.onScroll();
+      }
+    };
+
+    gate.addEventListener('click', e => {
+      e.preventDefault();
+      this.releaseEntrance(true);
+    });
+
+    // Safety valve: never leave the page unscrollable because of a stray
+    // hash change or a browser that skipped the click.
+    window.addEventListener('hashchange', () => this.releaseEntrance(false));
+  }
+
   jumpSection(dir) {
     if (!this.allSections || !this.allSections.length) return;
     let curIdx = 0, bd = Infinity;
@@ -696,6 +811,7 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    document.documentElement.classList.remove('entrance-locked');
     document.removeEventListener('scroll', this.onScroll, true);
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('keydown', this.onKey);
@@ -737,6 +853,25 @@ class Component extends DCLogic {
       });
     }, { threshold: 0.1 });
     panels.forEach(el => io.observe(el));
+  }
+
+  buildDots(w) {
+    if (!w.rail || !w.frames || w.frames.length < 2) return;
+    const wrap = document.createElement('div');
+    wrap.setAttribute('data-rail-dots', '');
+    wrap.setAttribute('aria-hidden', 'true');
+    w.dots = w.frames.map((f, i) => {
+      const d = document.createElement('button');
+      d.type = 'button';
+      d.className = 'rail-dot' + (i === 0 ? ' is-on' : '');
+      d.tabIndex = -1;
+      d.addEventListener('click', () => {
+        w.rail.scrollTo({ left: f.offsetLeft + f.offsetWidth / 2 - w.rail.clientWidth / 2, behavior: this.reduce ? 'auto' : 'smooth' });
+      });
+      wrap.appendChild(d);
+      return d;
+    });
+    w.rail.insertAdjacentElement('afterend', wrap);
   }
 
   padRail(w) {
@@ -802,6 +937,7 @@ class Component extends DCLogic {
       const i = this.activeFrame(w) + 1;
       const label = pad(i) + ' / ' + pad(w.frames.length);
       if (w.count && w.count.textContent !== label) w.count.textContent = label;
+      if (w.dots) w.dots.forEach((d, di) => d.classList.toggle('is-on', di === i - 1));
       w.frames.forEach((f, fi) => { f.style.opacity = fi === i - 1 ? '1' : '0.55'; f.style.transition = 'opacity ' + (0.4 * this.pace) + 's ease'; });
 
       if (r.top <= vh * 0.65 && r.bottom >= vh * 0.35) {
